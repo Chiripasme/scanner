@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Equipos</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding: 8px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Tabla de Usuarios y Equipos</h2>
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>Nombre de Usuario</th>
+        <th>Serial de Equipo</th>
+        <th>Serial de Monitor</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="text" placeholder="Usuario"></td>
+        <td><input type="text" placeholder="Serial Equipo"></td>
+        <td><input type="text" id="monitor-serial-1" placeholder="Escanea aquí"></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Escáner de Monitor</h3>
+  <div id="reader" style="width:300px;"></div>
+
+  <script>
+    function onScanSuccess(decodedText, decodedResult) {
+      document.getElementById("monitor-serial-1").value = decodedText;
+      html5QrcodeScanner.clear(); // Detiene el escaneo después de leer
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader", { fps: 10, qrbox: 250 });
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>
