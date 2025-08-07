@@ -2,18 +2,42 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Registro de Equipos</title>
-  <script src="https://unpkg.com/html5-qrcode"></script>
+  <title>Gestión de Dispositivos</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
-    table, th, td {
-      border: 1px solid black;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    table {
+      width: 100%;
       border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
       padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 4px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
-  <h2>Tabla de Usuarios y Equipos</h2>
+
+  <h1>📋 Gestión de Dispositivos</h1>
+  <p>Carga automática desde <strong>Devices.csv</strong>. Escanea el serial del monitor y guarda los cambios.</p>
+
   <table id="tabla">
     <thead>
       <tr>
@@ -23,26 +47,70 @@
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td><input type="text" placeholder="Usuario"></td>
-        <td><input type="text" placeholder="Serial Equipo"></td>
-        <td><input type="text" id="monitor-serial-1" placeholder="Escanea aquí"></td>
-      </tr>
+      <!-- Se llena dinámicamente -->
     </tbody>
   </table>
 
-  <h3>Escáner de Monitor</h3>
-  <div id="reader" style="width:300px;"></div>
+  <button onclick="exportCSV()">💾 Guardar CSV</button>
 
   <script>
-    function onScanSuccess(decodedText, decodedResult) {
-      document.getElementById("monitor-serial-1").value = decodedText;
-      html5QrcodeScanner.clear(); // Detiene el escaneo después de leer
-    }
+    // Cargar CSV desde el mismo directorio
+    fetch('Devices.csv')
+      .then(response => response.text())
+      .then(csv => {
+        const data = Papa.parse(csv, { header: true }).data;
+        const tbody = document.querySelector('#tabla tbody');
+        tbody.innerHTML = '';
 
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-      "reader", { fps: 10, qrbox: 250 });
-    html5QrcodeScanner.render(onScanSuccess);
+        data.forEach((row, index) => {
+          const tr = document.createElement('tr');
+
+          // Nombre de Usuario
+          const tdUser = document.createElement('td');
+          tdUser.textContent = row['Nombre de Usuario'] || '';
+          tr.appendChild(tdUser);
+
+          // Serial de Equipo
+          const tdSerial = document.createElement('td');
+          tdSerial.textContent = row['Serial de Equipo'] || '';
+          tr.appendChild(tdSerial);
+
+          // Serial de Monitor (editable)
+          const tdMonitor = document.createElement('td');
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.id = `monitor-serial-${index}`;
+          input.placeholder = 'Escanea aquí';
+          tdMonitor.appendChild(input);
+          tr.appendChild(tdMonitor);
+
+          tbody.appendChild(tr);
+        });
+      });
+
+    // Exportar como nuevo CSV
+    function exportCSV() {
+      const rows = [];
+      const table = document.querySelector('#tabla');
+      const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent);
+      rows.push(headers);
+
+      table.querySelectorAll('tbody tr').forEach(tr => {
+        const row = Array.from(tr.querySelectorAll('td')).map(td => {
+          const input = td.querySelector('input');
+          return input ? input.value : td.textContent;
+        });
+        rows.push(row);
+      });
+
+      const csvContent = rows.map(e => e.join(",")).join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "Devices_updated.csv";
+      link.click();
+    }
   </script>
+
 </body>
 </html>
